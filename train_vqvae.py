@@ -50,7 +50,7 @@ def train(epoch, loader, model, optimizer, scheduler, device):
                 f'lr: {lr:.5f}'
             )
         )
-
+	
         if i % 100 == 0:
             model.eval()
 
@@ -61,7 +61,7 @@ def train(epoch, loader, model, optimizer, scheduler, device):
 
             utils.save_image(
                 torch.cat([sample, out], 0),
-                f'sample/{str(epoch + 1).zfill(5)}_{str(i).zfill(5)}.png',
+                f'/user/student.aau.dk/palmin15/vq-vae-2-pytorch/sample/{str(epoch + 1).zfill(5)}_{str(i).zfill(5)}.png',
                 nrow=sample_size,
                 normalize=True,
                 range=(-1, 1),
@@ -93,7 +93,7 @@ if __name__ == '__main__':
         ]
     )
 
-    dataset = datasets.ImageFolder(args.path, transform=transform)
+    dataset = datasets.CIFAR10(args.path,transform=transform, download=True)#datasets.ImageFolder(args.path, transform=transform)
     loader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=4)
 
     model = nn.DataParallel(VQVAE()).to(device)
@@ -108,5 +108,5 @@ if __name__ == '__main__':
     for i in range(args.epoch):
         train(i, loader, model, optimizer, scheduler, device)
         torch.save(
-            model.module.state_dict(), f'checkpoint/vqvae_{str(i + 1).zfill(3)}.pt'
+            model.module.state_dict(), f'/user/student.aau.dk/palmin15/vq-vae-2-pytorch/checkpoint/vqvae_{str(i + 1).zfill(3)}.pt'
         )

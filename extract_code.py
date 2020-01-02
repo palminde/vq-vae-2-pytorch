@@ -3,7 +3,7 @@ import pickle
 
 import torch
 from torch.utils.data import DataLoader
-from torchvision import transforms
+from torchvision import transforms, datasets
 import lmdb
 from tqdm import tqdm
 
@@ -16,13 +16,17 @@ def extract(lmdb_env, loader, model, device):
 
     with lmdb_env.begin(write=True) as txn:
         pbar = tqdm(loader)
-
-        for img, _, filename in pbar:
+        
+        for img, filename in pbar:
+            print(img.shape)
+            print(filename)
             img = img.to(device)
 
             _, _, _, id_t, id_b = model.encode(img)
             id_t = id_t.detach().cpu().numpy()
             id_b = id_b.detach().cpu().numpy()
+            print(id_t.shape)
+            print(id_b.shape)
 
             for file, top, bottom in zip(filename, id_t, id_b):
                 row = CodeRow(top=top, bottom=bottom, filename=file)
@@ -53,7 +57,7 @@ if __name__ == '__main__':
         ]
     )
 
-    dataset = ImageFileDataset(args.path, transform=transform)
+    dataset = datasets.CIFAR10(args.path, transform=transform)
     loader = DataLoader(dataset, batch_size=128, shuffle=False, num_workers=4)
 
     model = VQVAE()
