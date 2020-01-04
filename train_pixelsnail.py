@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
     if args.hier == 'top':
         model = PixelSNAIL(
-            [32, 32],
+            [4, 4],
             512,
             args.channel,
             5,
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     elif args.hier == 'bottom':
         model = PixelSNAIL(
-            [64, 64],
+            [8, 8],
             512,
             args.channel,
             5,
@@ -151,5 +151,5 @@ if __name__ == '__main__':
         train(args, i, loader, model, optimizer, scheduler, device)
         torch.save(
             {'model': model.module.state_dict(), 'args': args},
-            f'checkpoint/pixelsnail_{args.hier}_{str(i + 1).zfill(3)}.pt',
+            f'/home/palminde/Documents/vq_vae/checkpoint/pixelsnail_{args.hier}_{str(i + 1).zfill(3)}.pt',
         )

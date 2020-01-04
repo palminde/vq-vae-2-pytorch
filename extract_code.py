@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    device = 'cuda'
+    device = 'cpu'
 
     transform = transforms.Compose(
         [
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     )
 
     dataset = datasets.CIFAR10(args.path, transform=transform)
-    loader = DataLoader(dataset, batch_size=128, shuffle=False, num_workers=4)
+    loader = DataLoader(dataset, batch_size=64, shuffle=False, num_workers=4)
 
     model = VQVAE()
     model.load_state_dict(torch.load(args.ckpt))
