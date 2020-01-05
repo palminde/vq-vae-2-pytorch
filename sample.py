@@ -4,7 +4,6 @@ import os
 import torch
 from torchvision.utils import save_image
 from tqdm import tqdm
-
 from vqvae import VQVAE
 from pixelsnail import PixelSNAIL
 
@@ -25,7 +24,7 @@ def sample_model(model, device, batch, size, temperature, condition=None):
 
 
 def load_model(model, checkpoint, device):
-    ckpt = torch.load(os.path.join('checkpoint', checkpoint))
+    ckpt = torch.load(os.path.join('checkpoint', checkpoint),map_location=torch.device('cpu'))
 
     
     if 'args' in ckpt:
@@ -36,7 +35,7 @@ def load_model(model, checkpoint, device):
 
     elif model == 'pixelsnail_top':
         model = PixelSNAIL(
-            [32, 32],
+            [4, 4],
             512,
             args.channel,
             5,
@@ -49,7 +48,7 @@ def load_model(model, checkpoint, device):
 
     elif model == 'pixelsnail_bottom':
         model = PixelSNAIL(
-            [64, 64],
+            [8, 8],
             512,
             args.channel,
             5,
@@ -73,7 +72,7 @@ def load_model(model, checkpoint, device):
 
 
 if __name__ == '__main__':
-    device = 'cuda'
+    device = 'cpu'
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch', type=int, default=8)
@@ -89,9 +88,9 @@ if __name__ == '__main__':
     model_top = load_model('pixelsnail_top', args.top, device)
     model_bottom = load_model('pixelsnail_bottom', args.bottom, device)
 
-    top_sample = sample_model(model_top, device, args.batch, [32, 32], args.temp)
+    top_sample = sample_model(model_top, device, args.batch, [4, 4], args.temp)
     bottom_sample = sample_model(
-        model_bottom, device, args.batch, [64, 64], args.temp, condition=top_sample
+        model_bottom, device, args.batch, [8, 8], args.temp, condition=top_sample
     )
 
     decoded_sample = model_vqvae.decode_code(top_sample, bottom_sample)
