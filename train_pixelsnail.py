@@ -1,10 +1,10 @@
 import argparse
-
 import numpy as np
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import os
 
 try:
     from apex import amp
@@ -22,9 +22,9 @@ def train(args, epoch, loader, model, optimizer, scheduler, device):
 
     criterion = nn.CrossEntropyLoss()
 
-    for i, (top, bottom, label) in enumerate(loader):
+    for i, batch in enumerate(loader):
         model.zero_grad()
-
+        top = batch['top']
         top = top.to(device)
 
         if args.hier == 'top':
@@ -32,6 +32,7 @@ def train(args, epoch, loader, model, optimizer, scheduler, device):
             out, _ = model(top)
 
         elif args.hier == 'bottom':
+            bottom = batch['bottom']
             bottom = bottom.to(device)
             target = bottom
             out, _ = model(bottom, condition=top)
@@ -82,18 +83,24 @@ if __name__ == '__main__':
     parser.add_argument('--amp', type=str, default='O0')
     parser.add_argument('--sched', type=str)
     parser.add_argument('--ckpt', type=str)
+    parser.add_argument('--img_size', type=int)
+    parser.add_argument('--device', type=str, default='cuda')
+    parser.add_argument('--out', type=str)
     parser.add_argument('path', type=str)
 
     args = parser.parse_args()
 
     print(args)
 
-    device = 'cuda'
-
+    device = args.device
+    """
     dataset = LMDBDataset(args.path)
     loader = DataLoader(
         dataset, batch_size=args.batch, shuffle=True, num_workers=4, drop_last=True
     )
+    """
+
+    loader = np.load(args.path, allow_pickle=True)
 
     ckpt = {}
 
@@ -101,9 +108,21 @@ if __name__ == '__main__':
         ckpt = torch.load(args.ckpt)
         args = ckpt['args']
 
+    if args.img_size == 32:
+        top_input = [4, 4]
+        bottom_input = [8, 8]
+    elif args.img_size == 256:
+        top_input = [32, 32]
+        bottom_input =[64, 64]
+    else:
+        raise NotImplementedError('Currently supports img_size = 32 | 256')
+
+    if not os.path.exists(args.out):
+        os.mkdir(args.out)
+
     if args.hier == 'top':
         model = PixelSNAIL(
-            [4, 4],
+            top_input,
             512,
             args.channel,
             5,
@@ -116,7 +135,7 @@ if __name__ == '__main__':
 
     elif args.hier == 'bottom':
         model = PixelSNAIL(
-            [8, 8],
+            bottom_input,
             512,
             args.channel,
             5,
@@ -151,5 +170,5 @@ if __name__ == '__main__':
         train(args, i, loader, model, optimizer, scheduler, device)
         torch.save(
             {'model': model.module.state_dict(), 'args': args},
-            f'/home/palminde/Documents/vq_vae/checkpoint/pixelsnail_{args.hier}_{str(i + 1).zfill(3)}.pt',
+            f'{args.out}pixelsnail_{args.hier}_{str(i + 1).zfill(3)}.pt',
         )
