@@ -24,7 +24,7 @@ def train(args, epoch, loader, model, optimizer, scheduler, device):
 
     for i, batch in enumerate(loader):
         model.zero_grad()
-        top = batch['top']
+        top = torch.from_numpy(batch['top'])
         top = top.to(device)
 
         if args.hier == 'top':
@@ -32,7 +32,7 @@ def train(args, epoch, loader, model, optimizer, scheduler, device):
             out, _ = model(top)
 
         elif args.hier == 'bottom':
-            bottom = batch['bottom']
+            bottom = torch.from_numpy(batch['bottom'])
             bottom = bottom.to(device)
             target = bottom
             out, _ = model(bottom, condition=top)
